@@ -4,6 +4,7 @@ import os
 
 
 def traverse_directory(folder_path, paths=[]):
+    """Traverses the directory and returns a list of paths to json forms."""
     obj = os.scandir(folder_path)
 
     for entry in obj:
@@ -32,6 +33,7 @@ def check_parameters(field, is_array=False):
 
 
 def search_in_form(form_object, found, is_array=False):
+    """Appends fields in the form that fulfill the required conditions."""
     for field in form_object:
         if field["type"] == "ARRAY":
             form_from_group = field["groupPrototype"]
@@ -56,8 +58,7 @@ def search_in_forms(json_form_paths, found=[]):
 
 
 def main():
-    folder_path = r"C:\Users\pedro\source\repos\bha-fichamedicaapi\dynFormsDefinitions\BradFord Hill"
-    json_paths = traverse_directory(folder_path)
+    json_paths = traverse_directory(r'{}'.format(main_path))
     found = search_in_forms(json_paths)
 
     print("Found ", len(found), " fields with the specified parameters and values.")
@@ -68,6 +69,14 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-p",
+        "--path",
+        default=[],
+        dest="path",
+        help="Path to the folder containing the json forms.",
+        required=True
+    )
     parser.add_argument(
         "-m",
         "--matchs",
@@ -87,6 +96,8 @@ if __name__ == "__main__":
 
     if not (args.matchs or args.has_parameters):
         parser.error("Either -m or -hp must be specified. Exiting.")
+
+    main_path = args.path
 
     if args.matchs:
         matchs = args.matchs.split(",")
