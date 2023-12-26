@@ -33,6 +33,10 @@ def check_parameters(field, is_array=False):
         if parameter not in field or field[parameter] != value:
             return False
 
+    for parameter in has_parameters:
+        if parameter not in field:
+            return False
+
     return True
 
 
@@ -51,9 +55,6 @@ def search_in_form(form_object, found, is_array=False):
 
 def search_in_forms(json_form_paths, found=[]):
     """Calls search_in_form for every json form in the list of paths."""
-
-    if matchs == []:
-        return []
 
     for json_form_path in json_form_paths:
         with open(json_form_path, encoding="utf-8") as json_form:
@@ -90,8 +91,29 @@ if __name__ == "__main__":
         dest="matchs",
         help="Search for json form with a parameter that matches specified value. Ex: -m type=TEXT,url=localhost:4000",
     )
+    parser.add_argument(
+        "-hp",
+        "--has_parameters",
+        default=[],
+        dest="has_parameters",
+        help="Search for json form that has a parameter, not necessarily with a specified value. Ex: -hp type,url"
+    )
 
-    verbose = parser.parse_args().verbose
-    matchs = parser.parse_args().matchs.split(",")
+    args = parser.parse_args()
+
+    if not (args.matchs or args.has_parameters):
+        parser.error("Either -m or -hp must be specified. Exiting.")
+
+    verbose = args.verbose
+
+    if args.matchs:
+        matchs = args.matchs.split(",")
+    else:
+        matchs = []
+
+    if args.has_parameters:
+        has_parameters = args.has_parameters.split(",")
+    else:
+        has_parameters = []
 
     main()
