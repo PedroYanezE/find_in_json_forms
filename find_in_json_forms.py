@@ -6,19 +6,10 @@ import os
 def traverse_directory(folder_path, paths=[]):
     obj = os.scandir(folder_path)
 
-    if verbose:
-        print("-" * (2 + len(folder_path)))
-        print(" " + folder_path + " ")
-        print("-" * (2 + len(folder_path)) + "\n")
-
     for entry in obj:
         if entry.is_dir() and entry.name != ".git":
-            if verbose:
-                print()
             paths = traverse_directory(folder_path + "\\" + entry.name, paths)
         elif entry.is_file() and entry.name != ".gitignore":
-            if verbose:
-                print(entry.name)
             paths.append(entry.path)
 
     return paths
@@ -78,13 +69,6 @@ def main():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-v",
-        "--verbose",
-        default=False,
-        dest="verbose",
-        help="Output extra information as it runs",
-    )
-    parser.add_argument(
         "-m",
         "--matchs",
         default=[],
@@ -103,8 +87,6 @@ if __name__ == "__main__":
 
     if not (args.matchs or args.has_parameters):
         parser.error("Either -m or -hp must be specified. Exiting.")
-
-    verbose = args.verbose
 
     if args.matchs:
         matchs = args.matchs.split(",")
