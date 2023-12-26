@@ -2,79 +2,96 @@ import argparse
 import json
 import os
 
-def traverse_directory(folder_path, paths = []):
+
+def traverse_directory(folder_path, paths=[]):
     obj = os.scandir(folder_path)
 
-    if(verbose):
-        print("-"*(2+len(folder_path)))
+    if verbose:
+        print("-" * (2 + len(folder_path)))
         print(" " + folder_path + " ")
-        print("-"*(2+len(folder_path))+ "\n")
+        print("-" * (2 + len(folder_path)) + "\n")
 
     for entry in obj:
         if entry.is_dir() and entry.name != ".git":
-            if(verbose):
+            if verbose:
                 print()
             paths = traverse_directory(folder_path + "\\" + entry.name, paths)
         elif entry.is_file() and entry.name != ".gitignore":
-            if(verbose):
+            if verbose:
                 print(entry.name)
             paths.append(entry.path)
 
-    return(paths)
+    return paths
 
-def check_parameters_in_field(field):
-    """Checks if the form field has the searched parameters in it, and if the excluded parameters aren't."""
 
-    for parameter in parameters:
-        if parameter[0] == "!":
-            if parameter[1:] in field:
-                return(False)
-        else:
-            if(parameter not in field or field[parameter] == ""):
-                return(False)
+def check_parameters(field, is_array=False):
+    """Checks if the form field has the searched parameters in it and if they match the specified value."""
 
-    return(True)
+    for match in matchs:
+        parameter, value = match.split("=")
 
-def search_in_form(form_object, found, myFlag):
+        if parameter not in field or field[parameter] != value:
+            return False
+
+    return True
+
+
+def search_in_form(form_object, found, is_array=False):
     for field in form_object:
-        if(field['type'] == "ARRAY"):
-            form_from_group = field['groupPrototype']
-            search_in_form(form_from_group, found, myFlag = True)
-        elif(field['type'] == "GROUP"):
-            form_from_group = field['group']
-            search_in_form(form_from_group, found, myFlag = True)
+        if field["type"] == "ARRAY":
+            form_from_group = field["groupPrototype"]
+            search_in_form(form_from_group, found, is_array=True)
+        elif field["type"] == "GROUP":
+            form_from_group = field["group"]
+            search_in_form(form_from_group, found)
         else:
-            if(check_parameters_in_field(field)):
+            if check_parameters(field, is_array):
                 found.append(field)
 
-def search_in_forms(json_form_paths, found = []):
+
+def search_in_forms(json_form_paths, found=[]):
     """Calls search_in_form for every json form in the list of paths."""
 
-    if parameters == []:
-        return([])
+    if matchs == []:
+        return []
 
     for json_form_path in json_form_paths:
-        with open(json_form_path, 'r') as json_form:
+        with open(json_form_path, encoding="utf-8") as json_form:
             form_object = json.load(json_form)
-            search_in_form(form_object, found, False)
+            search_in_form(form_object, found)
 
-    return(found)
+    return found
+
 
 def main():
-    folder_path = r'C:\Users\pedro\source\repos\bha-fichamedicaapi\dynFormsDefinitions\BradFord Hill'
+    folder_path = r"C:\Users\pedro\source\repos\bha-fichamedicaapi\dynFormsDefinitions\BradFord Hill"
     json_paths = traverse_directory(folder_path)
     found = search_in_forms(json_paths)
 
-    print("Found " + str(len(found)) + " fields with the parameters: " + str(parameters) + "\n")
+    print("Found ", len(found), " fields with the specified parameters and values.")
 
     for i in found:
         print(i)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", default=False, dest='verbose',help="output extra information as it runs")
-    parser.add_argument("-p", "--parameters", default=[], dest='parameters',help="parameters to search in the fields of the json forms")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        default=False,
+        dest="verbose",
+        help="Output extra information as it runs",
+    )
+    parser.add_argument(
+        "-m",
+        "--matchs",
+        default=[],
+        dest="matchs",
+        help="Search for json form with a parameter that matches specified value. Ex: -m type=TEXT,url=localhost:4000",
+    )
+
     verbose = parser.parse_args().verbose
-    parameters = parser.parse_args().parameters.split(',')
+    matchs = parser.parse_args().matchs.split(",")
 
     main()
